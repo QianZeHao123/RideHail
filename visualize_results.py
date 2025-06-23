@@ -1,60 +1,67 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
 import matplotlib.pyplot as plt
-import re
+import os
+import glob
+from datetime import datetime
 
-# Load PPO training log
-log_file = "logs/ppo_training.log"
+def visualize_metrics():
+    """Load and visualize training metrics from CSV."""
+    os.makedirs("plots", exist_ok=True)
 
-# Extract only the last loss value per iteration
-loss_dict_per_iteration = {}
+    df = pd.read_csv("logs/training_metrics_20250521_192201.csv")
+    df['order acceptance rate'] = df['episode assigned orders'] / df['episode total orders']
+    df['episode avg driver commission'] = df['episode total driver commission'] / df['episode total orders']
+    
+    plt.scatter(df['order acceptance rate'], df['episode avg driver commission'])
+    
+    # plt.figure(figsize=(12, 6))
+    plt.figure(figsize=(16, 12))
+    plt.suptitle(f"Training Metrics - {datetime.now().strftime('%Y-%m-%d')}", y=1.02)
+    
+    # 1. Training Loss
+    plt.subplot(2, 2, 1)
+    df['loss'].dropna().plot(color='tab:blue')
+    plt.title("Training Loss Over Update Steps")
+    plt.xlabel("Update Step")
+    plt.ylabel("Loss")
+    plt.grid(True, alpha=0.3)
+    
+    # 2. Episode Rewards
+    plt.subplot(2, 2, 2)
+    df['episode reward'].dropna().plot(color='tab:green')
+    plt.title("Episode Rewards")
+    plt.xlabel("Episode")
+    plt.ylabel("Total Reward")
+    plt.grid(True, alpha=0.3)
+    
+    # 3. Episode Lengths
+    plt.subplot(2, 2, 3)
+    df['episode length'].dropna().plot(color='tab:orange')
+    plt.title("Episode Lengths")
+    plt.xlabel("Episode")
+    plt.ylabel("Steps")
+    plt.grid(True, alpha=0.3)
+    
+    # 4. Action Distribution
+    plt.subplot(2, 2, 4)
+    pd.Series(df['action'].dropna()).hist(bins=50, color='tab:red')
+    plt.title("Action Value Distribution")
+    plt.xlabel("Clipped Action Value")
+    plt.ylabel("Frequency")
+    plt.grid(True, alpha=0.3)
+    
+    plt.tight_layout()
+    
+    # Save with timestamp
+    plot_path = f"plots/training_metrics_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+    plt.savefig(plot_path, bbox_inches='tight', dpi=150)
+    plt.close()
+    
+    print(f"Generated visualization: {plot_path}")
+        
 
-with open(log_file, "r") as file:
-    for line in file:
-        match = re.search(r"Iteration (\d+): Loss Values - defaultdict.*?({.*})", line)
-        if match:
-            iteration = int(match.group(1))  # Extract iteration number
-            loss_dict = eval(match.group(2))  # Convert dictionary string to Python dict
-            
-            if "train/loss" in loss_dict:  
-                loss_dict_per_iteration[iteration] = loss_dict["train/loss"]  # Stores only last value per iteration
-
-# Convert dictionary to DataFrame for plotting
-df_loss = pd.DataFrame({"Iteration": list(loss_dict_per_iteration.keys()), "Loss": list(loss_dict_per_iteration.values())})
-df_loss.set_index("Iteration", inplace=True)
-
-# Load simulation results to visualize commission rates and revenue
-simulation_results = pd.read_csv("logs/simulation_results.csv")
-
-# Plot Loss Curve
-plt.figure(figsize=(10, 5))
-plt.plot(df_loss["Loss"], label="Total PPO Loss", marker="o", linestyle="-", color="b")
-plt.xlabel("Iteration")
-plt.ylabel("Loss Value")
-plt.title("PPO Training Loss Over Time")
-plt.legend()
-plt.grid()
-plt.show()
-
-# Plot Commission Rate Over Time
-plt.figure(figsize=(10, 5))
-plt.plot(simulation_results["order_id"], simulation_results["commission"], label="Optimal Commission Rate", marker="o", linestyle="-", color="r")
-plt.xlabel("Order ID")
-plt.ylabel("Commission Rate")
-plt.title("Optimized Commission Rate Over Orders")
-plt.legend()
-plt.grid()
-plt.show()
-
-# Plot Revenue Trend Over Time
-plt.figure(figsize=(10, 5))
-plt.plot(simulation_results["order_id"], simulation_results["revenue"], label="Platform Revenue", marker="o", linestyle="-", color="g")
-plt.xlabel("Order ID")
-plt.ylabel("Revenue")
-plt.title("Revenue Generated Over Orders")
-plt.legend()
-plt.grid()
-plt.show()
-
+if __name__ == "__main__":
+    visualize_metrics()
 
 
