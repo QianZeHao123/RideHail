@@ -2,7 +2,7 @@ from .driver import Driver
 from .order import Order
 import pandas as pd
 from imblearn.ensemble import BalancedRandomForestClassifier
-
+import numpy as np
 
 class DriverManager:
 
@@ -144,10 +144,16 @@ class DriverManager:
                 model=self.model
             )
 
+            # accept_order = driver.decide_acceptance(
+            #     order=order,
+            #     schedule_data=self.schedule_data,
+            #     threshold=0.5
+            # )
             accept_order = driver.decide_acceptance(
                 order=order,
                 schedule_data=self.schedule_data,
-                threshold=0.5)
+                threshold=np.random.random()
+            )
 
             if accept_order:
                 print(f"Order has been accepted, stop driver attampt")
@@ -163,10 +169,21 @@ class DriverManager:
 
                 # Concatenate the existing set with the new driver's data,
                 # then drop duplicates to ensure only the latest record for each driver_id is kept.
-                self.update_driver_set = pd.concat(
-                    [self.update_driver_set, accepting_driver_data],
-                    ignore_index=True
-                ).drop_duplicates(subset=['driver_id'], keep='last')
+                # self.update_driver_set = pd.concat(
+                #         [self.update_driver_set, accepting_driver_data],
+                #         ignore_index=True
+                #     ).drop_duplicates(subset=['driver_id'], keep='last')
+                # print(f"Updated update_driver_set with driver_id: {driver_id}")
+
+                if self.update_driver_set.empty:
+                    self.update_driver_set = accepting_driver_data
+                else:
+                    self.update_driver_set = pd.concat(
+                        [self.update_driver_set, accepting_driver_data],
+                        ignore_index=True
+                    ).drop_duplicates(subset=['driver_id'], keep='last')
                 print(f"Updated update_driver_set with driver_id: {driver_id}")
 
                 break
+
+        return accept_order
