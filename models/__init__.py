@@ -8,5 +8,8 @@ Contains all data models for the simulation:
 # Explicitly expose key classes for cleaner imports
 from .order import Order
 from .driver import Driver
+from .weather import WeatherService
+from .driver_manager import DriverManager
 
-__all__ = ['Order', 'Driver']  # Controls what gets imported with `from models import *`
+# Controls what gets imported with `from models import *`
+__all__ = [Order, Driver, WeatherService, DriverManager]
