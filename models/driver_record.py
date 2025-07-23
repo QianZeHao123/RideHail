@@ -63,4 +63,4 @@ class DriverRecord:
         else:
             self.driver_record_table = pd.concat(
                 [self.driver_record_table, driver_record_info], ignore_index=True
-            ).drop_duplicates(subset=["driver_id"], keep="last")
+            )
