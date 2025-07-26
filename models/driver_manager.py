@@ -4,8 +4,9 @@ from .driver_record import DriverRecord
 
 
 import pandas as pd
-from imblearn.ensemble import BalancedRandomForestClassifier
 import numpy as np
+from imblearn.ensemble import BalancedRandomForestClassifier
+from geopy.distance import geodesic
 
 
 class DriverManager:
@@ -20,6 +21,7 @@ class DriverManager:
         schedule_data: pd.DataFrame,
         acceptance_model: BalancedRandomForestClassifier,
         driver_record: DriverRecord,
+        sort_driver_pool_policy: str = "distance",
     ):
         self.order_driver_data = order_driver_data
         self.driver_data = driver_data
@@ -36,6 +38,14 @@ class DriverManager:
         )
         self.model = acceptance_model
         self.driver_record = driver_record
+
+        if sort_driver_pool_policy == "distance":
+            self.sort_driver_pool_policy = "distance"
+        elif sort_driver_pool_policy == "random":
+            self.sort_driver_pool_policy = "random"
+        else:
+            self.sort_driver_pool_policy = "distance"
+        print(f"The Driver Pool is sorted by {self.sort_driver_pool_policy}")
 
     def get_original_driver_set(self, order: Order) -> pd.DataFrame:
         """
@@ -139,9 +149,21 @@ class DriverManager:
                 "update_driver_set has no matched driver ID for existing drivers in the pool, no update from it."
             )
 
-        # Randomize the order of the driver_pool
-        driver_pool = driver_pool.sample(frac=1).reset_index(drop=True)
-        print("Driver pool has been randomized.")
+        if self.sort_driver_pool_policy == "random":
+            # Randomize the order of the driver_pool
+            driver_pool = driver_pool.sample(frac=1).reset_index(drop=True)
+            print("Driver pool has been randomized.")
+        else:
+            # Sorted by distance
+            driver_pool["distance"] = driver_pool.apply(
+                lambda row: geodesic(
+                    (row["driver_lat"], row["driver_lon"]),
+                    (order.pickup_lat, order.pickup_lon),
+                ).m,
+                axis=1,
+            )
+            driver_pool = driver_pool.sort_values(by="distance", ascending=True)
+            print("Driver pool has been sorted by distance.")
 
         return driver_pool
 
