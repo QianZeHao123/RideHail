@@ -39,6 +39,9 @@ class DriverManager:
         self.model = acceptance_model
         self.driver_record = driver_record
 
+        # init an empty driver pool
+        self.driver_pool = None
+
         if sort_driver_pool_policy == "distance":
             self.sort_driver_pool_policy = "distance"
         elif sort_driver_pool_policy == "random":
@@ -167,15 +170,89 @@ class DriverManager:
 
         return driver_pool
 
+    # def get_driver_attampt(self, order: Order):
+    #     """
+    #     Iterates through the driver pool for a given order.
+    #     You can add your specific logic for each driver inside the loop.
+    #     """
+    #     driver_pool = self.get_driver_pool(order)
+    #     if driver_pool.empty:
+    #         print("Driver pool is empty for this order.")
+    #     for _, driver_info in driver_pool.iterrows():
+    #         driver_id = driver_info["driver_id"]
+    #         driver_lat = driver_info["driver_lat"]
+    #         driver_lon = driver_info["driver_lon"]
+    #         driver_area = driver_info["driver_area"]
+    #         work_time_minutes = driver_info["work_time_minutes"]
+    #         driver = Driver(
+    #             driver_id=driver_id,
+    #             current_lat=driver_lat,
+    #             current_lon=driver_lon,
+    #             current_area=driver_area,
+    #             work_time_minutes=work_time_minutes,
+    #             model=self.model,
+    #         )
+
+    #         # accept_order = driver.decide_acceptance(
+    #         #     order=order,
+    #         #     schedule_data=self.schedule_data,
+    #         #     threshold=0.5
+    #         # )
+    #         accept_order = driver.decide_acceptance(
+    #             order=order,
+    #             schedule_data=self.schedule_data,
+    #             threshold=np.random.random(),
+    #         )
+
+    #         if accept_order:
+    #             self.driver_record.add_driver_record(order=order, driver=driver)
+    #             print(f"Order has been accepted, stop driver attampt")
+    #             # New Logic: Update update_driver_set with the accepting driver's info
+    #             accepting_driver_data = pd.DataFrame(
+    #                 [
+    #                     {
+    #                         "driver_id": driver_id,
+    #                         "driver_lat": order.dropoff_lat,  # Use order's pickup latitude
+    #                         "driver_lon": order.dropoff_lon,  # Use order's pickup longitude
+    #                         "driver_area": order.pickup_area,  # Use order's pickup area
+    #                         # Keep driver's current work time
+    #                         "work_time_minutes": work_time_minutes
+    #                         + order.complete_time,
+    #                     }
+    #                 ]
+    #             )
+
+    #             # Concatenate the existing set with the new driver's data,
+    #             # then drop duplicates to ensure only the latest record for each driver_id is kept.
+    #             # self.update_driver_set = pd.concat(
+    #             #         [self.update_driver_set, accepting_driver_data],
+    #             #         ignore_index=True
+    #             #     ).drop_duplicates(subset=['driver_id'], keep='last')
+    #             # print(f"Updated update_driver_set with driver_id: {driver_id}")
+
+    #             if self.update_driver_set.empty:
+    #                 self.update_driver_set = accepting_driver_data
+    #             else:
+    #                 self.update_driver_set = pd.concat(
+    #                     [self.update_driver_set, accepting_driver_data],
+    #                     ignore_index=True,
+    #                 ).drop_duplicates(subset=["driver_id"], keep="last")
+    #             print(f"Updated update_driver_set with driver_id: {driver_id}")
+
+    #             break
+
+    #     return accept_order
+
     def get_driver_attampt(self, order: Order):
         """
         Iterates through the driver pool for a given order.
         You can add your specific logic for each driver inside the loop.
         """
-        driver_pool = self.get_driver_pool(order)
-        if driver_pool.empty:
+        self.driver_pool = self.get_driver_pool(order)
+        # driver_pool = self.get_driver_pool(order)
+        if self.driver_pool.empty:
             print("Driver pool is empty for this order.")
-        for _, driver_info in driver_pool.iterrows():
+        for _, driver_info in self.driver_pool.iterrows():
             driver_id = driver_info["driver_id"]
             driver_lat = driver_info["driver_lat"]
             driver_lon = driver_info["driver_lon"]
