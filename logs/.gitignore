@@ -1,3 +1,7 @@
 tensorboard/
 ppo/
 training_metrics_*.csv
+*.zip
+*.npz
+PPO_*/
+*.csv
